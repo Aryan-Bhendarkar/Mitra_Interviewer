@@ -99,3 +99,13 @@ interface InterviewFormProps {
 interface TechIconProps {
   techStack: string[];
 }
+
+interface CreateInterviewParams {
+  role: string;
+  level: string;
+  type: string;
+  techstack: string[];
+  questions: string[];
+  userId: string;
+  amount: number;
+}

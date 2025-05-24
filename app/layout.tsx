@@ -18,9 +18,8 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" className="dark">
+}>) {  return (
+    <html lang="en" className="dark" suppressHydrationWarning={true}>
       <body className={`${monaSans.className} antialiased pattern`}>
         {children}
 

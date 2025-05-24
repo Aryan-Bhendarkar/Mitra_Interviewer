@@ -78,10 +78,9 @@ export class VoiceService {
         }
       }
     };    this.speechRecognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      
       // Handle specific error cases
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
+        console.log('Speech recognition: No speech detected, restarting...');
         // These are recoverable errors, restart listening
         if (this.isActive) {
           setTimeout(() => {
@@ -89,12 +88,13 @@ export class VoiceService {
               this.startListening();
             }
           }, 1500);
-        }
-      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        }      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         // Permission issues - emit error to UI
+        console.error('Speech recognition error:', event.error);
         this.emit('error', new Error('Microphone access denied. Please allow microphone permissions and try again.'));
       } else {
         // Other errors - try to restart after delay
+        console.error('Speech recognition error:', event.error);
         if (this.isActive) {
           setTimeout(() => {
             if (this.isActive && !this.isListening && !this.isSpeaking) {
@@ -207,12 +207,12 @@ export class VoiceService {
       
       this.currentUtterance.rate = 0.85; // Slightly slower for better clarity
       this.currentUtterance.pitch = 1.0;
-      this.currentUtterance.volume = 1.0;
-
-      this.currentUtterance.onstart = () => {
+      this.currentUtterance.volume = 1.0;      this.currentUtterance.onstart = () => {
         this.isSpeaking = true;
         this.emit('speech-start');
-      };      this.currentUtterance.onend = () => {
+      };
+      
+      this.currentUtterance.onend = () => {
         this.isSpeaking = false;
         this.emit('speech-end');
         
@@ -227,16 +227,25 @@ export class VoiceService {
         
         resolve();
       };
-
+      
       this.currentUtterance.onerror = (event) => {
         this.isSpeaking = false;
         this.emit('speech-end');
-        reject(new Error(`Speech synthesis error: ${event.error}`));
+        
+        // Handle "interrupted" as normal behavior when we cancel speech
+        if (event.error === 'interrupted') {
+          console.log('Speech synthesis was interrupted (normal when canceling)');
+          resolve(); // Resolve normally since this is expected
+        } else {
+          reject(new Error(`Speech synthesis error: ${event.error}`));
+        }
       };
 
       this.speechSynthesis.speak(this.currentUtterance);
     });
-  }  private startListening() {
+  }
+  
+  private startListening() {
     if (!this.speechRecognition || !this.isActive) {
       console.log('Cannot start listening: speechRecognition or isActive is false');
       return;

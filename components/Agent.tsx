@@ -134,7 +134,6 @@ const Agent = ({
       voiceService.off("error", onError);
     };
   }, [voiceService]);
-
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
@@ -164,9 +163,39 @@ const Agent = ({
       }
     };
 
+    const handleGenerateInterview = async (messages: VoiceMessage[]) => {
+      console.log("handleGenerateInterview");
+
+      try {
+        // Convert conversation to the format needed for interview generation
+        const conversation = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
+
+        const response = await fetch('/api/generate-interview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation,
+            userId: userId!
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Interview generated successfully:", data.interviewId);
+          router.push("/");
+        } else {
+          console.error("Error generating interview");
+          router.push("/");
+        }
+      } catch (error) {
+        console.error("Error generating interview:", error);
+        router.push("/");
+      }
+    };
+
     if (callStatus === CallStatus.FINISHED) {
       if (type === "generate") {
-        router.push("/");
+        handleGenerateInterview(messages);
       } else {
         handleGenerateFeedback(messages);
       }

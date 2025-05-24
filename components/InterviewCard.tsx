@@ -32,10 +32,12 @@ const InterviewCard = async ({
       Mixed: "bg-light-600",
       Technical: "bg-light-800",
     }[normalizedType] || "bg-light-600";
-
   const formattedDate = dayjs(
-    feedback?.createdAt || createdAt || Date.now()
+    feedback?.createdAt || createdAt || new Date().toISOString()
   ).format("MMM D, YYYY");
+
+  // Create a deterministic seed for cover selection to prevent hydration issues
+  const coverSeed = `${interviewId || ''}-${role}-${type}`;
 
   return (
     <div className="card-border w-[360px] max-sm:w-full min-h-96">
@@ -53,7 +55,7 @@ const InterviewCard = async ({
 
           {/* Cover Image */}
           <Image
-            src={getRandomInterviewCover()}
+            src={getRandomInterviewCover(coverSeed)}
             alt="cover-image"
             width={90}
             height={90}
@@ -89,9 +91,7 @@ const InterviewCard = async ({
         </div>
 
         <div className="flex flex-row justify-between">
-          <DisplayTechIcons techStack={techstack} />
-
-          <Button className="btn-primary">
+          <DisplayTechIcons techStack={techstack} />          <Button className="btn-primary">
             <Link
               href={
                 feedback
@@ -99,7 +99,7 @@ const InterviewCard = async ({
                   : `/interview/${interviewId}`
               }
             >
-              {feedback ? "Check Feedback" : "View Interview"}
+              {feedback ? "View Feedback" : "Start Interview"}
             </Link>
           </Button>
         </div>

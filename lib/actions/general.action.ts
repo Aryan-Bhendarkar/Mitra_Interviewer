@@ -55,9 +55,12 @@ export async function createFeedback(params: CreateFeedbackParams) {
       feedbackRef = db.collection("feedback").doc(feedbackId);
     } else {
       feedbackRef = db.collection("feedback").doc();
-    }
+    }    await feedbackRef.set(feedback);
 
-    await feedbackRef.set(feedback);
+    // Mark the interview as finalized
+    await db.collection("interviews").doc(interviewId).update({
+      finalized: true
+    });
 
     return { success: true, feedbackId: feedbackRef.id };
   } catch (error) {
@@ -124,4 +127,70 @@ export async function getInterviewsByUserId(
     id: doc.id,
     ...doc.data(),
   })) as Interview[];
+}
+
+export async function getPendingInterviewsByUserId(
+  userId: string
+): Promise<Interview[] | null> {
+  const interviews = await db
+    .collection("interviews")
+    .where("userId", "==", userId)
+    .where("finalized", "==", false)
+    .get();
+
+  // Sort manually since we can't use orderBy without composite index
+  const sortedInterviews = interviews.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return sortedInterviews as Interview[];
+}
+
+export async function getCompletedInterviewsByUserId(
+  userId: string
+): Promise<Interview[] | null> {
+  const interviews = await db
+    .collection("interviews")
+    .where("userId", "==", userId)
+    .where("finalized", "==", true)
+    .get();
+
+  // Sort manually since we can't use orderBy without composite index
+  const sortedInterviews = interviews.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return sortedInterviews as Interview[];
+}
+
+export async function createInterview(params: CreateInterviewParams): Promise<{ success: boolean; interviewId?: string }> {
+  try {
+    const { role, level, type, techstack, questions, userId, amount } = params;
+
+    const interview = {
+      role,
+      level,
+      type,
+      techstack,
+      questions,
+      userId,
+      amount,
+      finalized: false, // Interview hasn't been taken yet
+      createdAt: new Date().toISOString(),
+    };
+
+    const interviewRef = db.collection("interviews").doc();
+    await interviewRef.set(interview);
+
+    return { success: true, interviewId: interviewRef.id };
+  } catch (error) {
+    console.error("Error creating interview:", error);
+    return { success: false };
+  }
 }
