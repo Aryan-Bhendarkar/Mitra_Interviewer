@@ -75,11 +75,18 @@ const InterviewCard = async ({
                 alt="calendar"
               />
               <p>{formattedDate}</p>
-            </div>
-
-            <div className="flex flex-row gap-2 items-center">
+            </div>            <div className="flex flex-row gap-2 items-center">
               <Image src="/star.svg" width={22} height={22} alt="star" />
-              <p>{feedback?.totalScore || "---"}/100</p>
+              {feedback?.totalScore ? (
+                <p className={`font-bold ${
+                  feedback.totalScore >= 80 ? 'text-green-600' : 
+                  feedback.totalScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                }`}>
+                  {feedback.totalScore}/100
+                </p>
+              ) : (
+                <p className="text-gray-500">Not yet rated</p>
+              )}
             </div>
           </div>
 

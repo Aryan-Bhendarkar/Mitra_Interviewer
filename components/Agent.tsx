@@ -140,7 +140,8 @@ const Agent = ({
       voiceService.off("processing-end", onProcessingEnd);
       voiceService.off("error", onError);
     };
-  }, [voiceService]);
+  }, [voiceService]);  const [processingFeedback, setProcessingFeedback] = useState(false);
+  
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
@@ -148,6 +149,7 @@ const Agent = ({
 
       // Check if we have enough conversation to generate feedback
       if (messages.length === 0) {
+        console.log("No conversation data available, marking interview as completed without feedback");
         // Just mark the interview as finalized without generating feedback
         try {
           await fetch('/api/complete-interview', {
@@ -161,11 +163,21 @@ const Agent = ({
           router.push("/");
         }
         return;
-      }      // Convert messages to the format expected by createFeedback
+      }
+
+      console.log("Generating feedback with", messages.length, "messages");
+      
+      // Show feedback generation message
+      setProcessingFeedback(true);
+      setLastMessage("Generating your interview feedback... This may take a few moments.");
+
+      // Convert messages to the format expected by createFeedback
       const transcript = messages.map(msg => ({
         role: msg.role === "assistant" ? "assistant" : "user",
         content: msg.content
       }));
+
+      console.log("Transcript to send:", transcript);
 
       const { success, feedbackId: id } = await createFeedback({
         interviewId: interviewId!,
@@ -174,12 +186,15 @@ const Agent = ({
         feedbackId,
       });
 
+      console.log("Feedback creation result:", { success, feedbackId: id });
+
       if (success && id) {
         router.push(`/interview/${interviewId}/feedback`);
       } else {
+        console.error("Failed to generate feedback, redirecting to home");
         router.push("/");
       }
-    };    const handleGenerateInterview = async (messages: VoiceMessage[]) => {
+    };const handleGenerateInterview = async (messages: VoiceMessage[]) => {
       try {
         // Validate that we have meaningful conversation data
         if (!messages || messages.length < 2) {
@@ -234,8 +249,10 @@ const Agent = ({
         // Always redirect to home, don't leave user stuck
         router.push("/");
       }
-    };if (callStatus === CallStatus.FINISHED && !isProcessingCompletion) {
+    };    if (callStatus === CallStatus.FINISHED && !isProcessingCompletion) {
       setIsProcessingCompletion(true);
+      
+      console.log("Interview finished, processing completion with messages:", messages.length);
       
       if (type === "generate") {
         handleGenerateInterview(messages);
@@ -243,7 +260,7 @@ const Agent = ({
         handleGenerateFeedback(messages);
       }
     }
-  }, [messages, callStatus, feedbackId, interviewId, router, type, userId, isProcessingCompletion]);  const handleCall = async () => {
+  }, [messages, callStatus, feedbackId, interviewId, router, type, userId, isProcessingCompletion]);const handleCall = async () => {
     if (!isSupported) {
       setShowSupport(true);
       return;
@@ -281,7 +298,6 @@ const Agent = ({
       voiceService.forceRestartListening();
     }
   };
-
   return (
     <>
       <div className="call-view">
@@ -296,6 +312,11 @@ const Agent = ({
               className="object-cover"
             />
             {isSpeaking && <span className="animate-speak" />}
+            {processingFeedback && (
+              <div className="absolute top-0 right-0 w-5 h-5">
+                <div className="w-full h-full rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
+              </div>
+            )}
           </div>
           <h3>AI Interviewer</h3>
         </div>
@@ -361,30 +382,30 @@ const Agent = ({
             </p>
           </div>
         </div>
-      )}
-
-      <div className="w-full flex justify-center">
-        {callStatus !== "ACTIVE" ? (
+      )}      <div className="w-full flex justify-center">
+        {callStatus === CallStatus.ACTIVE ? (
+          <button className="btn-disconnect" onClick={() => handleDisconnect()}>
+            End Interview
+          </button>
+        ) : callStatus === CallStatus.FINISHED ? (
+          <button className="btn-disconnect" onClick={() => handleDisconnect()}>
+            End Interview
+          </button>
+        ) : (
           <button className="relative btn-call" onClick={() => handleCall()}>
             <span
               className={cn(
                 "absolute animate-ping rounded-full opacity-75",
-                callStatus !== "CONNECTING" && "hidden"
+                callStatus !== CallStatus.CONNECTING && "hidden"
               )}
             />
 
             <span className="relative">
-              {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                ? "Start Interview"
-                : ". . ."}
+              {callStatus === CallStatus.INACTIVE ? "Start Interview" : ". . ."}
             </span>
           </button>
-        ) : (
-          <button className="btn-disconnect" onClick={() => handleDisconnect()}>
-            End Interview
-          </button>
         )}
-      </div>      {/* Browser compatibility warning */}
+      </div>{/* Browser compatibility warning */}
       {(callStatus === CallStatus.INACTIVE && !showSupport) && (
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-500">

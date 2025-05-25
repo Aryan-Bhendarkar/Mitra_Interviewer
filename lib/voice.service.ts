@@ -100,11 +100,14 @@ export class VoiceService {
       await this.speak(aiResponse);
       
       this.emit('processing-end');
-      
-      // Check if interview should end
+        // Check if interview should end
       if (this.shouldEndConversation()) {
-        this.stopConversation();
+        console.log('Interview should end, stopping conversation. History length:', this.conversationHistory.length);
+        setTimeout(() => {
+          this.stopConversation();
+        }, 2000); // Give 2 seconds for the AI response to finish speaking
       } else {
+        console.log('Interview continuing, restarting listening...');
         // Continue listening for next user input
         this.startListening();
       }
@@ -149,14 +152,17 @@ export class VoiceService {
       console.error('Error generating AI response:', error);
       return "I'm experiencing some technical difficulties. Could you please try again?";
     }
-  }
-
-  private shouldEndConversation(): boolean {
+  }  private shouldEndConversation(): boolean {
     if (!this.config) return true;
     
     if (this.config.type === 'interview' && this.config.questions) {
-      // End if we've gone through all questions
-      return this.currentQuestionIndex >= this.config.questions.length;
+      // End if we've gone through all questions and there's at least 1 user response after last question
+      const lastQuestion = this.currentQuestionIndex >= this.config.questions.length;
+      const hasUserResponseAfterLastQuestion = lastQuestion && 
+        this.conversationHistory.length > 0 && 
+        this.conversationHistory[this.conversationHistory.length - 1].role === 'user';
+      
+      return lastQuestion && hasUserResponseAfterLastQuestion;
     }
     
     // For generate type, end after a reasonable number of exchanges
@@ -280,9 +286,11 @@ export class VoiceService {
       this.emit('error', error);
     }
   }
-
   public stopConversation() {
-    console.log('Stopping voice conversation');
+    console.log('Stopping voice conversation - Status before:', {
+      isActive: this.isActive,
+      historyLength: this.conversationHistory.length
+    });
     this.isActive = false;
     this.stopListening();
     
@@ -292,6 +300,7 @@ export class VoiceService {
     
     this.isSpeaking = false;
     this.emit('conversation-end');
+    console.log('Voice conversation stopped - conversation-end event emitted');
   }
 
   public forceRestartListening() {
