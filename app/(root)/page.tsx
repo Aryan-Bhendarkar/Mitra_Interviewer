@@ -4,46 +4,33 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import InterviewCard from "@/components/InterviewCard";
 
-import { getCurrentUser } from "@/lib/actions/auth.action";
 import {
   getPendingInterviewsByUserId,
   getCompletedInterviewsByUserId,
 } from "@/lib/actions/general.action";
 
 async function Home() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return (
-      <>
-        <section className="card-cta">
-          <div className="flex flex-col gap-6 max-w-lg">
-            <h2>Get Interview-Ready with AI-Powered Practice & Feedback</h2>
-            <p className="text-lg">
-              Practice real interview questions & get instant feedback
-            </p>
-
-            <Button asChild className="btn-primary max-sm:w-full">
-              <Link href="/sign-in">Sign In to Start</Link>
-            </Button>
-          </div>
-
-          <Image
-            src="/robot.png"
-            alt="robo-dude"
-            width={400}
-            height={400}
-            className="max-sm:hidden"
-          />
-        </section>
-      </>
-    );
-  }
+  // For hackathon - use a default user ID since we removed authentication
+  const defaultUserId = "hackathon-user";
 
   const [pendingInterviews, completedInterviews] = await Promise.all([
-    getPendingInterviewsByUserId(user.id),
-    getCompletedInterviewsByUserId(user.id),
+    getPendingInterviewsByUserId(defaultUserId),
+    getCompletedInterviewsByUserId(defaultUserId),
   ]);
+  console.log("Dashboard data:", {
+    pendingCount: pendingInterviews?.length ?? 0,
+    completedCount: completedInterviews?.length ?? 0,
+    pendingInterviews: pendingInterviews?.map((i) => ({
+      id: i.id,
+      role: i.role,
+      finalized: i.finalized,
+    })),
+    completedInterviews: completedInterviews?.map((i) => ({
+      id: i.id,
+      role: i.role,
+      finalized: i.finalized,
+    })),
+  });
 
   const hasPendingInterviews = (pendingInterviews?.length ?? 0) > 0;
   const hasCompletedInterviews = (completedInterviews?.length ?? 0) > 0;
@@ -81,7 +68,7 @@ async function Home() {
             pendingInterviews?.map((interview) => (
               <InterviewCard
                 key={interview.id}
-                userId={user?.id}
+                userId={defaultUserId}
                 interviewId={interview.id}
                 role={interview.role}
                 type={interview.type}
@@ -91,7 +78,9 @@ async function Home() {
             ))
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No interview questions generated yet</p>
+              <p className="text-gray-500 mb-4">
+                No interview questions generated yet
+              </p>
               <Button asChild variant="outline">
                 <Link href="/interview">Generate Your First Interview</Link>
               </Button>
@@ -104,11 +93,10 @@ async function Home() {
         <h2>Completed Interviews</h2>
 
         <div className="interviews-section">
-          {hasCompletedInterviews ? (
-            completedInterviews?.map((interview) => (
+          {hasCompletedInterviews ? (            completedInterviews?.map((interview) => (
               <InterviewCard
                 key={interview.id}
-                userId={user?.id}
+                userId={defaultUserId}
                 interviewId={interview.id}
                 role={interview.role}
                 type={interview.type}

@@ -413,6 +413,73 @@ const Agent = ({
             Hide compatibility check
           </button>
         </div>
+      )}      {/* Temporary Test Button */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-4 text-center space-x-2">
+          <button 
+            className="btn-primary"
+            onClick={() => {
+              const testMessages: VoiceMessage[] = [
+                { role: 'assistant', content: 'Hello! Thank you for taking the time to speak with me today. What is your experience with React?' },
+                { role: 'user', content: 'I have been working with React for 3 years, building dynamic web applications.' },
+                { role: 'assistant', content: 'That sounds great! Can you tell me about a challenging project you worked on?' },
+                { role: 'user', content: 'I built a complex dashboard with real-time data updates using React hooks and context API.' }
+              ];
+              setMessages(testMessages);
+              setCallStatus(CallStatus.FINISHED);
+            }}
+          >
+            Test Complete ({type})
+          </button>
+          
+          {type === "generate" && (
+            <>
+              <button 
+                className="btn-secondary ml-2"
+                onClick={() => {
+                  const generateMessages: VoiceMessage[] = [
+                    { role: 'assistant', content: 'Hello! I\'m here to help you create custom interview questions. What job role are you preparing for?' },
+                    { role: 'user', content: 'I want to prepare for a Senior Frontend Developer position.' },
+                    { role: 'assistant', content: 'Great! What technologies and frameworks should the interview focus on?' },
+                    { role: 'user', content: 'I want questions about React, TypeScript, Node.js, and system design. Make it challenging for a senior level position.' },
+                    { role: 'assistant', content: 'Perfect! How many questions would you like me to generate?' },
+                    { role: 'user', content: 'Please generate 8 questions, mix of technical and behavioral questions.' }
+                  ];
+                  setMessages(generateMessages);
+                  setCallStatus(CallStatus.FINISHED);
+                }}
+              >
+                Test Generate Interview
+              </button>
+              
+              <button 
+                className="btn-secondary ml-2"
+                onClick={() => {
+                  // Test with empty conversation (should redirect gracefully)
+                  setMessages([]);
+                  setCallStatus(CallStatus.FINISHED);
+                }}
+              >
+                Test Empty Conversation
+              </button>
+              
+              <button 
+                className="btn-secondary ml-2"
+                onClick={() => {
+                  // Test with insufficient conversation (should redirect gracefully)
+                  const shortMessages: VoiceMessage[] = [
+                    { role: 'assistant', content: 'Hi' },
+                    { role: 'user', content: 'Ok' }
+                  ];
+                  setMessages(shortMessages);
+                  setCallStatus(CallStatus.FINISHED);
+                }}
+              >
+                Test Short Conversation
+              </button>
+            </>
+          )}
+        </div>
       )}
     </>
   );

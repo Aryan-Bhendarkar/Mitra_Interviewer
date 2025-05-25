@@ -4,14 +4,21 @@ import { createInterview } from "@/lib/actions/general.action";
 
 export async function POST(request: Request) {
   try {
-    const { conversation, userId } = await request.json();
+    const body = await request.json();
+    console.log("Generate interview API called with body:", body);
+    
+    const { conversation, userId } = body;
 
     if (!conversation || !userId) {
+      console.log("Missing required fields:", { conversation: !!conversation, userId: !!userId });
       return Response.json({ 
         success: false, 
         error: "Missing conversation or userId" 
       }, { status: 400 });
     }
+
+    console.log("Conversation length:", conversation.length);
+    console.log("User ID:", userId);
 
     // Extract interview details from conversation using AI
     const analysisPrompt = `Analyze this conversation between a user and an AI assistant to extract interview details:

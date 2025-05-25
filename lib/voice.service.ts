@@ -1,382 +1,222 @@
-"use client";
-
-import { INTERVIEWER_SYSTEM_PROMPT } from "@/constants";
-
 interface VoiceMessage {
   role: "user" | "assistant";
   content: string;
 }
 
+interface ConversationConfig {
+  type: string;
+  questions?: string[];
+  userName: string;
+  userId: string;
+}
+
 export class VoiceService {
   private eventListeners: Map<string, Function[]> = new Map();
-  private speechSynthesis: SpeechSynthesis;
-  private speechRecognition: SpeechRecognition | null = null;
-  private isActive = false;
-  private isListening = false;
-  private isSpeaking = false;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
+  private recognition: any = null;
+  private synthesis: SpeechSynthesis | null = null;
+  private isActive: boolean = false;
+  private isListening: boolean = false;
+  private isSpeaking: boolean = false;
   private conversationHistory: VoiceMessage[] = [];
-  private systemPrompt = "";
-  private questions: string[] = [];
-  private heartbeatInterval: NodeJS.Timeout | null = null;
-  constructor() {
-    this.speechSynthesis = window.speechSynthesis;
-    
-    // Initialize Speech Recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      this.speechRecognition = new SpeechRecognition();
-      this.setupSpeechRecognition();
-    } else {
-      console.warn('Speech Recognition not supported in this browser');
-      // Emit error for unsupported browsers
-      setTimeout(() => {
-        this.emit('error', new Error('Speech Recognition not supported in this browser. Please use Chrome, Edge, or Safari.'));
-      }, 100);
-    }
+  private config: ConversationConfig | null = null;
+  private currentQuestionIndex: number = 0;
 
-    // Load voices when they become available
-    this.speechSynthesis.onvoiceschanged = () => {
-      console.log('Voices loaded:', this.speechSynthesis.getVoices().length);
-    };
+  constructor() {
+    if (typeof window !== 'undefined') {
+      // Initialize Speech Recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = false;
+        this.recognition.lang = 'en-US';
+        this.setupRecognitionEvents();
+      }
+
+      // Initialize Speech Synthesis
+      if ('speechSynthesis' in window) {
+        this.synthesis = window.speechSynthesis;
+      }
+    }
   }
 
-  private setupSpeechRecognition() {
-    if (!this.speechRecognition) return;
+  private setupRecognitionEvents() {
+    if (!this.recognition) return;
 
-    this.speechRecognition.continuous = true;
-    this.speechRecognition.interimResults = false;
-    this.speechRecognition.lang = 'en-US';
-
-    this.speechRecognition.onstart = () => {
+    this.recognition.onstart = () => {
       this.isListening = true;
       this.emit('listening-start');
-    };    this.speechRecognition.onend = () => {
+    };
+
+    this.recognition.onend = () => {
       this.isListening = false;
       this.emit('listening-end');
       
       // Restart listening if conversation is still active and not speaking
       if (this.isActive && !this.isSpeaking) {
-        // Add a longer delay to ensure speech has fully stopped
         setTimeout(() => {
-          if (this.isActive && !this.isSpeaking && !this.isListening) {
+          if (this.isActive && !this.isSpeaking) {
             this.startListening();
           }
         }, 1000);
       }
     };
 
-    this.speechRecognition.onresult = (event) => {
-      const result = event.results[event.results.length - 1];
-      if (result.isFinal) {
-        const transcript = result[0].transcript.trim();
-        if (transcript) {
-          const userMessage: VoiceMessage = { role: 'user', content: transcript };
-          this.conversationHistory.push(userMessage);
-          this.emit('message', userMessage);
-          this.processUserInput(transcript);
-        }
+    this.recognition.onresult = (event: any) => {
+      const transcript = event.results[event.results.length - 1][0].transcript.trim();
+      if (transcript) {
+        this.handleUserInput(transcript);
       }
-    };    this.speechRecognition.onerror = (event) => {
-      // Handle specific error cases
-      if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        console.log('Speech recognition: No speech detected, restarting...');
-        // These are recoverable errors, restart listening
-        if (this.isActive) {
-          setTimeout(() => {
-            if (this.isActive && !this.isListening && !this.isSpeaking) {
-              this.startListening();
-            }
-          }, 1500);
-        }      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        // Permission issues - emit error to UI
-        console.error('Speech recognition error:', event.error);
-        this.emit('error', new Error('Microphone access denied. Please allow microphone permissions and try again.'));
-      } else {
-        // Other errors - try to restart after delay
-        console.error('Speech recognition error:', event.error);
-        if (this.isActive) {
-          setTimeout(() => {
-            if (this.isActive && !this.isListening && !this.isSpeaking) {
-              this.startListening();
-            }
-          }, 2000);
-        }
-      }
-    };  }
+    };
 
-  private startHeartbeat() {
-    // Clear any existing heartbeat
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-    }
-
-    // Check every 5 seconds if listening should be active
-    this.heartbeatInterval = setInterval(() => {
-      if (this.isActive && !this.isSpeaking && !this.isListening) {
-        console.log('Heartbeat: Restarting listening...');
-        this.startListening();
-      }
-    }, 5000);
+    this.recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      this.emit('error', new Error(`Speech recognition error: ${event.error}`));
+    };
   }
 
-  private stopHeartbeat() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
-  }
+  private async handleUserInput(transcript: string) {
+    console.log('User said:', transcript);
+    
+    // Add user message to history
+    const userMessage: VoiceMessage = { role: 'user', content: transcript };
+    this.conversationHistory.push(userMessage);
+    this.emit('message', userMessage);
 
-  private async processUserInput(userInput: string) {
+    // Stop listening while processing
+    this.stopListening();
+    this.emit('processing-start');
+
     try {
-      // Emit processing start
-      this.emit('processing-start');
-      
       // Generate AI response
-      const aiResponse = await this.generateAIResponse(userInput);
+      const aiResponse = await this.generateAIResponse(transcript);
       
-      // Emit processing end
-      this.emit('processing-end');
-      
-      const assistantMessage: VoiceMessage = { role: 'assistant', content: aiResponse };
-      this.conversationHistory.push(assistantMessage);
-      this.emit('message', assistantMessage);
-      
+      // Add AI message to history
+      const aiMessage: VoiceMessage = { role: 'assistant', content: aiResponse };
+      this.conversationHistory.push(aiMessage);
+      this.emit('message', aiMessage);
+
       // Speak the AI response
       await this.speak(aiResponse);
+      
+      this.emit('processing-end');
+      
+      // Check if interview should end
+      if (this.shouldEndConversation()) {
+        this.stopConversation();
+      } else {
+        // Continue listening for next user input
+        this.startListening();
+      }
     } catch (error) {
       this.emit('processing-end');
-      console.error('Error processing user input:', error);
-      this.emit('error', error instanceof Error ? error : new Error('Unknown error'));
+      this.emit('error', error);
     }
   }
 
   private async generateAIResponse(userInput: string): Promise<string> {
-    const conversation = this.conversationHistory.map(msg => ({
-      role: msg.role === 'assistant' ? 'assistant' : 'user',
-      content: msg.content
-    }));
-
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: this.systemPrompt },
-          ...conversation,
-          { role: 'user', content: userInput }
-        ],
-        questions: this.questions
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to generate AI response');
-    }
-
-    const data = await response.json();
-    return data.response;
-  }
-  private speak(text: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.isSpeaking) {
-        this.speechSynthesis.cancel();
-      }
-
-      this.currentUtterance = new SpeechSynthesisUtterance(text);
-      
-      // Configure voice settings with better voice selection
-      const voices = this.speechSynthesis.getVoices();
-      
-      // Prefer high quality voices first
-      const preferredVoice = voices.find(voice => 
-        voice.lang.startsWith('en') && (
-          voice.name.toLowerCase().includes('microsoft') ||
-          voice.name.toLowerCase().includes('google') ||
-          voice.name.toLowerCase().includes('samantha') ||
-          voice.name.toLowerCase().includes('karen') ||
-          voice.name.toLowerCase().includes('zira') ||
-          voice.name.toLowerCase().includes('female')
-        )
-      ) || voices.find(voice => voice.lang.startsWith('en') && voice.localService) ||
-          voices.find(voice => voice.lang.startsWith('en'));
-      
-      if (preferredVoice) {
-        this.currentUtterance.voice = preferredVoice;
-      }
-      
-      this.currentUtterance.rate = 0.85; // Slightly slower for better clarity
-      this.currentUtterance.pitch = 1.0;
-      this.currentUtterance.volume = 1.0;      this.currentUtterance.onstart = () => {
-        this.isSpeaking = true;
-        this.emit('speech-start');
-      };
-      
-      this.currentUtterance.onend = () => {
-        this.isSpeaking = false;
-        this.emit('speech-end');
-        
-        // Ensure listening restarts after AI finishes speaking
-        if (this.isActive) {
-          setTimeout(() => {
-            if (this.isActive && !this.isSpeaking && !this.isListening) {
-              this.startListening();
-            }
-          }, 800);
-        }
-        
-        resolve();
-      };
-      
-      this.currentUtterance.onerror = (event) => {
-        this.isSpeaking = false;
-        this.emit('speech-end');
-        
-        // Handle "interrupted" as normal behavior when we cancel speech
-        if (event.error === 'interrupted') {
-          console.log('Speech synthesis was interrupted (normal when canceling)');
-          resolve(); // Resolve normally since this is expected
-        } else {
-          reject(new Error(`Speech synthesis error: ${event.error}`));
-        }
-      };
-
-      this.speechSynthesis.speak(this.currentUtterance);
-    });
-  }
-  
-  private startListening() {
-    if (!this.speechRecognition || !this.isActive) {
-      console.log('Cannot start listening: speechRecognition or isActive is false');
-      return;
-    }
-
-    // Don't start if already listening or currently speaking
-    if (this.isListening || this.isSpeaking) {
-      console.log('Cannot start listening: already listening or speaking', {
-        isListening: this.isListening,
-        isSpeaking: this.isSpeaking
-      });
-      return;
+    if (!this.config) {
+      throw new Error('No conversation config available');
     }
 
     try {
-      console.log('Starting speech recognition...');
-      this.speechRecognition.start();
-    } catch (error) {
-      console.error('Error starting speech recognition:', error);
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userInput,
+          conversationHistory: this.conversationHistory,
+          type: this.config.type,
+          questions: this.config.questions,
+          currentQuestionIndex: this.currentQuestionIndex,
+          userName: this.config.userName
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Chat API error: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      // If speech recognition fails, try again after a short delay
-      if (this.isActive) {
-        setTimeout(() => {
-          if (this.isActive && !this.isListening && !this.isSpeaking) {
-            console.log('Retrying speech recognition after error...');
-            this.startListening();
-          }
-        }, 2000);
+      // Update question index if this was an interview question
+      if (this.config.type === 'interview' && this.config.questions) {
+        this.currentQuestionIndex++;
+      }
+      
+      return data.response || "I'm sorry, I didn't understand that. Could you please repeat?";
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      return "I'm experiencing some technical difficulties. Could you please try again?";
+    }
+  }
+
+  private shouldEndConversation(): boolean {
+    if (!this.config) return true;
+    
+    if (this.config.type === 'interview' && this.config.questions) {
+      // End if we've gone through all questions
+      return this.currentQuestionIndex >= this.config.questions.length;
+    }
+    
+    // For generate type, end after a reasonable number of exchanges
+    if (this.config.type === 'generate') {
+      return this.conversationHistory.length >= 20; // 10 exchanges
+    }
+    
+    return false;
+  }
+
+  private speak(text: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.synthesis) {
+        reject(new Error('Speech synthesis not available'));
+        return;
+      }
+
+      // Cancel any ongoing speech
+      this.synthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      utterance.onstart = () => {
+        this.isSpeaking = true;
+        this.emit('speech-start');
+      };
+
+      utterance.onend = () => {
+        this.isSpeaking = false;
+        this.emit('speech-end');
+        resolve();
+      };
+
+      utterance.onerror = (event) => {
+        this.isSpeaking = false;
+        this.emit('speech-end');
+        reject(new Error(`Speech synthesis error: ${event.error}`));
+      };
+
+      this.synthesis.speak(utterance);
+    });
+  }
+
+  private startListening() {
+    if (this.recognition && !this.isListening) {
+      try {
+        this.recognition.start();
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
       }
     }
   }
 
   private stopListening() {
-    if (this.speechRecognition && this.isListening) {
-      this.speechRecognition.stop();
+    if (this.recognition && this.isListening) {
+      this.recognition.stop();
     }
-  }  public async startConversation(config: {
-    type: 'generate' | 'interview';
-    questions?: string[];
-    userName?: string;
-    userId?: string;
-  }) {
-    if (this.isActive) {
-      this.stopConversation();
-    }
-
-    // Check for microphone permissions
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (error) {
-      this.emit('error', new Error('Microphone access is required for voice interviews. Please allow microphone access and try again.'));
-      return;
-    }
-
-    this.isActive = true;
-    this.conversationHistory = [];
-    this.questions = config.questions || [];
-
-    // Set system prompt based on conversation type
-    if (config.type === 'generate') {
-      this.systemPrompt = `You are a professional interview question generator assistant. Help the user create interview questions for their job role. Be conversational and ask follow-up questions to understand their needs better. Keep responses concise since this is a voice conversation.`;
-    } else {
-      this.systemPrompt = `${INTERVIEWER_SYSTEM_PROMPT}
-
-Interview Questions to ask:
-${this.questions.map((q, index) => `${index + 1}. ${q}`).join('\n')}
-
-Start with the first question and proceed naturally through the interview.`;
-    }
-
-    // Start heartbeat monitoring to ensure listening remains active
-    this.startHeartbeat();
-
-    this.emit('conversation-start');
-
-    // Start with greeting
-    const greeting = config.type === 'generate' 
-      ? `Hello ${config.userName}! I'm here to help you create interview questions. What type of role are you preparing interview questions for?`
-      : "Hello! Thank you for taking the time to speak with me today. I'm excited to learn more about you and your experience. Let's start with the first question.";
-
-    const greetingMessage: VoiceMessage = { role: 'assistant', content: greeting };
-    this.conversationHistory.push(greetingMessage);
-    this.emit('message', greetingMessage);
-
-    // Speak greeting and start listening
-    await this.speak(greeting);
-    this.startListening();
-  }
-  public stopConversation() {
-    this.isActive = false;
-    this.stopListening();
-    this.stopHeartbeat();
-    
-    if (this.isSpeaking) {
-      this.speechSynthesis.cancel();
-      this.isSpeaking = false;
-    }
-
-    this.emit('conversation-end');
-  }  public forceRestartListening() {
-    console.log('Force restarting speech recognition...', {
-      isActive: this.isActive,
-      isListening: this.isListening,
-      isSpeaking: this.isSpeaking
-    });
-    
-    this.stopListening();
-    
-    setTimeout(() => {
-      if (this.isActive && !this.isSpeaking) {
-        console.log('Force restart: Starting listening...');
-        this.startListening();
-      } else {
-        console.log('Force restart: Cannot start listening', {
-          isActive: this.isActive,
-          isSpeaking: this.isSpeaking
-        });
-      }
-    }, 1000);
-  }
-
-  public getStatus() {
-    return {
-      isActive: this.isActive,
-      isListening: this.isListening,
-      isSpeaking: this.isSpeaking
-    };
-  }
-
-  public getConversationHistory(): VoiceMessage[] {
-    return [...this.conversationHistory];
   }
 
   public on(event: string, listener: Function) {
@@ -403,12 +243,85 @@ Start with the first question and proceed naturally through the interview.`;
       });
     }
   }
+
+  public async startConversation(config: ConversationConfig) {
+    if (!this.recognition || !this.synthesis) {
+      throw new Error('Speech recognition or synthesis not supported');
+    }
+
+    this.config = config;
+    this.isActive = true;
+    this.conversationHistory = [];
+    this.currentQuestionIndex = 0;
+
+    console.log('Starting voice conversation with config:', config);
+
+    // Start with AI greeting
+    let greeting = '';
+    if (config.type === 'interview') {
+      greeting = `Hello ${config.userName}! I'm your AI interviewer today. I'll be asking you some questions to assess your skills and experience. Let's begin with our first question: ${config.questions?.[0] || 'Tell me about yourself.'}`;
+    } else {
+      greeting = `Hello ${config.userName}! I'm here to help you practice for interviews. Feel free to tell me about your background, skills, or any specific areas you'd like to work on.`;
+    }
+
+    this.emit('conversation-start');
+
+    try {
+      await this.speak(greeting);
+      
+      // Add AI greeting to history
+      const greetingMessage: VoiceMessage = { role: 'assistant', content: greeting };
+      this.conversationHistory.push(greetingMessage);
+      this.emit('message', greetingMessage);
+      
+      // Start listening for user response
+      this.startListening();
+    } catch (error) {
+      this.emit('error', error);
+    }
+  }
+
+  public stopConversation() {
+    console.log('Stopping voice conversation');
+    this.isActive = false;
+    this.stopListening();
+    
+    if (this.synthesis) {
+      this.synthesis.cancel();
+    }
+    
+    this.isSpeaking = false;
+    this.emit('conversation-end');
+  }
+
+  public forceRestartListening() {
+    if (this.isActive && !this.isSpeaking) {
+      this.startListening();
+    }
+  }
+
+  public getStatus() {
+    return {
+      isActive: this.isActive,
+      isListening: this.isListening,
+      isSpeaking: this.isSpeaking
+    };
+  }
+
+  public getConversationHistory() {
+    return this.conversationHistory;
+  }
 }
 
-// Global instance
+// Global instance - only available on client side
 let voiceServiceInstance: VoiceService | null = null;
 
 export const getVoiceService = (): VoiceService => {
+  // Return null during SSR, will be handled by components
+  if (typeof window === 'undefined') {
+    return null as any;
+  }
+  
   if (!voiceServiceInstance) {
     voiceServiceInstance = new VoiceService();
   }

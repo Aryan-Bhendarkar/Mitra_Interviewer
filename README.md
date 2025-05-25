@@ -39,7 +39,9 @@ If you prefer visual learning, this is the perfect resource for you. Follow our 
 
 ## <a name="introduction">🤖 Introduction</a>
 
-Built with Next.js for the user interface and backend logic, Firebase for authentication and data storage, styled with TailwindCSS and using Vapi's voice agents, Prepwise is a website project designed to help you learn integrating AI models with your apps. The platform offers a sleek and modern experience for job interview preparation.
+Built with Next.js for the user interface and backend logic, Firebase for data storage, styled with TailwindCSS and using Vapi's voice agents, Prepwise is a website project designed to help you learn integrating AI models with your apps. The platform offers a sleek and modern experience for job interview preparation.
+
+**🚨 Hackathon Ready Version**: This version has authentication removed for easy deployment and testing. Authentication would typically be handled by redirecting from a landing page in production.
 
 If you're getting started and need assistance or face any bugs, join our active Discord community with over **50k+** members. It's a place where people help each other out.
 
@@ -57,7 +59,7 @@ If you're getting started and need assistance or face any bugs, join our active 
 
 ## <a name="features">🔋 Features</a>
 
-👉 **Authentication**: Sign Up and Sign In using password/email authentication handled by Firebase.
+👉 **No Authentication Required**: Ready for hackathon deployment - no sign-up required, just start using the platform immediately.
 
 👉 **Create Interviews**: Easily generate job interviews with help of Vapi voice assistants and Google Gemini.
 
@@ -72,6 +74,17 @@ If you're getting started and need assistance or face any bugs, join our active 
 👉 **Responsiveness**: Fully responsive design that works seamlessly across devices.
 
 and many more, including code architecture and reusability
+
+## 🎯 Hackathon Deployment
+
+This version has been specifically prepared for hackathon deployment with the following modifications:
+
+- **Authentication Removed**: All sign-in/sign-up pages and authentication checks have been removed
+- **Default User**: Uses "Hackathon User" with ID "hackathon-user" for all operations
+- **Streamlined Experience**: Users can immediately start creating and taking interviews
+- **Production Ready**: All core functionality preserved while simplifying deployment
+
+The application now works without any authentication requirements and is ready for immediate testing and deployment.
 
 ## <a name="quick-start">🤸 Quick Start</a>
 
@@ -719,5 +732,6 @@ detailed explanations, cool features, and exercises to boost your skills. Give i
 <a href="https://jsmastery.pro/next15" target="_blank">
    <img src="https://github.com/user-attachments/assets/b8760e69-1f81-4a71-9108-ceeb1de36741" alt="Project Banner">
 </a>
-#   M i t r a A I  
+#   M i t r a A I 
+ 
  

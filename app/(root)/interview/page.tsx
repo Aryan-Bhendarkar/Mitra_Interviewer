@@ -1,13 +1,11 @@
-import { redirect } from "next/navigation";
 import Agent from "@/components/Agent";
-import { getCurrentUser } from "@/lib/actions/auth.action";
 
-const Page = async () => {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/sign-in");
-  }
+const Page = () => {
+  // For hackathon - use default user data since we removed authentication
+  const defaultUser = {
+    name: "Hackathon User",
+    id: "hackathon-user"
+  };
 
   return (
     <div className="root-layout">
@@ -20,10 +18,10 @@ const Page = async () => {
         </div>
         
         <Agent 
-          userName={user.name}
-          userId={user.id}
+          userName={defaultUser.name}
+          userId={defaultUser.id}
           type="generate"
-          profileImage={user.profileURL}
+          profileImage={undefined}
         />
       </div>
     </div>

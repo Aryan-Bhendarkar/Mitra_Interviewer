@@ -8,19 +8,18 @@ import {
   getInterviewById,
 } from "@/lib/actions/general.action";
 import { Button } from "@/components/ui/button";
-import { getCurrentUser } from "@/lib/actions/auth.action";
 
 const Feedback = async ({ params }: RouteParams) => {
   const { id } = await params;
-  const user = await getCurrentUser();
-
-  if (!user) redirect("/sign-in");
+  
+  // For hackathon - use default user data since we removed authentication
+  const defaultUserId = "hackathon-user";
 
   const interview = await getInterviewById(id);
   if (!interview) redirect("/");
   const feedback = await getFeedbackByInterviewId({
     interviewId: id,
-    userId: user.id,
+    userId: defaultUserId,
   });
 
   if (!feedback) redirect(`/interview/${id}`);
