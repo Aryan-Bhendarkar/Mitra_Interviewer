@@ -10,9 +10,25 @@ interface ConversationConfig {
   userId: string;
 }
 
+type EventCallback = (...args: unknown[]) => void;
+
+// Specific event types
+interface VoiceServiceEvents {
+  'conversation-start': () => void;
+  'conversation-end': () => void;
+  'message': (message: VoiceMessage) => void;
+  'speech-start': () => void;
+  'speech-end': () => void;
+  'listening-start': () => void;
+  'listening-end': () => void;
+  'processing-start': () => void;
+  'processing-end': () => void;
+  'error': (error: Error) => void;
+}
+
 export class VoiceService {
-  private eventListeners: Map<string, Function[]> = new Map();
-  private recognition: any = null;
+  private eventListeners: Map<string, EventCallback[]> = new Map();
+  private recognition: SpeechRecognition | null = null;
   private synthesis: SpeechSynthesis | null = null;
   private isActive: boolean = false;
   private isListening: boolean = false;
@@ -60,16 +76,14 @@ export class VoiceService {
           }
         }, 1000);
       }
-    };
-
-    this.recognition.onresult = (event: any) => {
+    };    this.recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[event.results.length - 1][0].transcript.trim();
       if (transcript) {
         this.handleUserInput(transcript);
       }
     };
 
-    this.recognition.onerror = (event: any) => {
+    this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error);
       this.emit('error', new Error(`Speech recognition error: ${event.error}`));
     };
@@ -223,16 +237,18 @@ export class VoiceService {
     if (this.recognition && this.isListening) {
       this.recognition.stop();
     }
-  }
-
-  public on(event: string, listener: Function) {
+  }  public on<K extends keyof VoiceServiceEvents>(event: K, listener: VoiceServiceEvents[K]): void;
+  public on(event: string, listener: EventCallback): void;
+  public on(event: string, listener: EventCallback) {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, []);
     }
     this.eventListeners.get(event)!.push(listener);
   }
 
-  public off(event: string, listener: Function) {
+  public off<K extends keyof VoiceServiceEvents>(event: K, listener: VoiceServiceEvents[K]): void;
+  public off(event: string, listener: EventCallback): void;
+  public off(event: string, listener: EventCallback) {
     if (this.eventListeners.has(event)) {
       const listeners = this.eventListeners.get(event)!;
       const index = listeners.indexOf(listener);
@@ -242,7 +258,7 @@ export class VoiceService {
     }
   }
 
-  private emit(event: string, ...args: any[]) {
+  private emit(event: string, ...args: unknown[]) {
     if (this.eventListeners.has(event)) {
       this.eventListeners.get(event)!.forEach(listener => {
         listener(...args);
@@ -325,10 +341,10 @@ export class VoiceService {
 // Global instance - only available on client side
 let voiceServiceInstance: VoiceService | null = null;
 
-export const getVoiceService = (): VoiceService => {
+export const getVoiceService = (): VoiceService | null => {
   // Return null during SSR, will be handled by components
   if (typeof window === 'undefined') {
-    return null as any;
+    return null;
   }
   
   if (!voiceServiceInstance) {

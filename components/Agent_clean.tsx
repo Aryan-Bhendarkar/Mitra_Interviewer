@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { getVoiceService } from "@/lib/voice.service";
+import { getVoiceService, VoiceService } from "@/lib/voice.service";
 import { createFeedback } from "@/lib/actions/general.action";
 import BrowserSupport from "./BrowserSupport";
 
@@ -38,7 +38,7 @@ const Agent = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [showTapToSpeak, setShowTapToSpeak] = useState(false);
-  const [voiceService, setVoiceService] = useState<any>(null);
+  const [voiceService, setVoiceService] = useState<VoiceService | null>(null);
   const [isSupported, setIsSupported] = useState(true);
   const [showSupport, setShowSupport] = useState(false);
   const [isProcessingCompletion, setIsProcessingCompletion] = useState(false);
@@ -140,7 +140,7 @@ const Agent = ({
       voiceService.off("processing-end", onProcessingEnd);
       voiceService.off("error", onError);
     };
-  }, [voiceService]);
+  }, [voiceService, callStatus, messages, questions, type]);
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
@@ -261,7 +261,7 @@ const Agent = ({
         type,
         questions,
         userName,
-        userId,
+        userId: userId || "",
       });
     } catch (error) {
       console.error("Error starting conversation:", error);
