@@ -32,19 +32,15 @@ export async function POST(request: Request) {
   }
 }
 
-interface OldFormatRequest {
-  messages: Array<{ role: 'system' | 'user' | 'assistant' | 'data'; content: string }>;
-  questions?: string[];
-}
-
-async function handleOldFormat({ messages, questions }: OldFormatRequest) {
+async function handleOldFormat({ messages, questions }: any) {
   // If it's an interview, use the interviewer system prompt with questions
-  const isInterview = messages.some((msg) => 
+  const isInterview = messages.some((msg: any) => 
     msg.content && msg.content.includes(INTERVIEWER_SYSTEM_PROMPT)
   );
+
   // Extract role and tech stack information if available
   let role = "the position";
-  let techStack: string[] = [];
+  let techStack = [];
   
   // Try to extract role and tech stack information from the messages
   for (const msg of messages) {

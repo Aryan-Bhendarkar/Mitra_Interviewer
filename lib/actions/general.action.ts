@@ -5,12 +5,7 @@ import { google } from "@ai-sdk/google";
 import { z } from "zod";
 
 import { db } from "@/firebase/admin";
-
-interface DocumentData {
-  id: string;
-  createdAt?: string;
-  [key: string]: unknown;
-}
+import { feedbackSchema } from "@/lib/schemas/feedback";
 
 export async function createFeedback(params: CreateFeedbackParams) {
   const { interviewId, userId, transcript, feedbackId } = params;
@@ -83,8 +78,8 @@ export async function createFeedback(params: CreateFeedbackParams) {
         system:
           "You are a professional interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories, providing specific examples from their responses.",
       });
-      object = result.object;    } catch (error: unknown) {
-      console.warn("AI generation failed, using fallback feedback:", error instanceof Error ? error.message : String(error));
+      object = result.object;} catch (error: any) {
+      console.warn("AI generation failed, using fallback feedback:", error.message);
         try {
         // Get the interview details for more personalized feedback
         const interview = await getInterviewById(interviewId);
@@ -346,16 +341,19 @@ export async function getPendingInterviewsByUserId(
 ): Promise<Interview[] | null> {
   const interviews = await db
     .collection("interviews")
-    .where("userId", "==", userId)    .where("finalized", "==", false)
+    .where("userId", "==", userId)
+    .where("finalized", "==", false)
     .get();
+
   // Sort manually since we can't use orderBy without composite index
   const sortedInterviews = interviews.docs
     .map((doc) => ({
       id: doc.id,
-      ...doc.data(),    }))    .sort(
-      (a: DocumentData, b: DocumentData) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime()
+      ...doc.data(),
+    }))
+    .sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
   return sortedInterviews as Interview[];
@@ -366,17 +364,19 @@ export async function getCompletedInterviewsByUserId(
 ): Promise<Interview[] | null> {
   const interviews = await db
     .collection("interviews")
-    .where("userId", "==", userId)    .where("finalized", "==", true)
+    .where("userId", "==", userId)
+    .where("finalized", "==", true)
     .get();
 
   // Sort manually since we can't use orderBy without composite index
   const sortedInterviews = interviews.docs
     .map((doc) => ({
       id: doc.id,
-      ...doc.data(),    }))    .sort(
-      (a: DocumentData, b: DocumentData) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime()
+      ...doc.data(),
+    }))
+    .sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
   return sortedInterviews as Interview[];

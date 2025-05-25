@@ -1,0 +1,57 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Perfect Circle Background -->
+  <circle cx="20" cy="20" r="19" fill="url(#modernBg)" stroke="url(#modernBorder)" stroke-width="1.5"/>
+  
+  <!-- Minimal AI Brain Symbol -->
+  <g transform="translate(12, 12)">
+    <!-- Central Core -->
+    <circle cx="8" cy="8" r="3" fill="none" stroke="url(#coreGradient)" stroke-width="1.5"/>
+    
+    <!-- Neural Nodes -->
+    <circle cx="8" cy="4" r="1.5" fill="url(#nodeGlow)"/>
+    <circle cx="4" cy="8" r="1.5" fill="url(#nodeGlow)"/>
+    <circle cx="12" cy="8" r="1.5" fill="url(#nodeGlow)"/>
+    <circle cx="8" cy="12" r="1.5" fill="url(#nodeGlow)"/>
+    
+    <!-- Connection Lines -->
+    <line x1="8" y1="5.5" x2="8" y2="6.5" stroke="url(#lineGradient)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="5.5" y1="8" x2="6.5" y2="8" stroke="url(#lineGradient)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="9.5" y1="8" x2="10.5" y2="8" stroke="url(#lineGradient)" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="8" y1="9.5" x2="8" y2="10.5" stroke="url(#lineGradient)" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+  
+  <defs>
+    <!-- Modern Background -->
+    <radialGradient id="modernBg" cx="50%" cy="50%">
+      <stop offset="0%" stopColor="#1e293b"/>
+      <stop offset="100%" stopColor="#0f172a"/>
+    </radialGradient>
+    
+    <!-- Modern Border -->
+    <linearGradient id="modernBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#6366f1"/>
+      <stop offset="33%" stopColor="#a855f7"/>
+      <stop offset="66%" stopColor="#10b981"/>
+      <stop offset="100%" stopColor="#6366f1"/>
+    </linearGradient>
+    
+    <!-- Core Gradient -->
+    <linearGradient id="coreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#f1f5f9"/>
+      <stop offset="100%" stopColor="#cbd5e1"/>
+    </linearGradient>
+    
+    <!-- Node Glow -->
+    <radialGradient id="nodeGlow" cx="50%" cy="50%">
+      <stop offset="0%" stopColor="#ffffff"/>
+      <stop offset="50%" stopColor="#e2e8f0"/>
+      <stop offset="100%" stopColor="#94a3b8"/>
+    </radialGradient>
+    
+    <!-- Line Gradient -->
+    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#e2e8f0"/>
+      <stop offset="100%" stopColor="#cbd5e1"/>
+    </linearGradient>
+  </defs>
+</svg>

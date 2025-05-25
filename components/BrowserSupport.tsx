@@ -33,7 +33,8 @@ const BrowserSupport = ({ onSupportChecked }: BrowserSupportProps) => {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           microphoneSupported = true;
           // Stop the stream immediately
-          stream.getTracks().forEach(track => track.stop());        } catch {
+          stream.getTracks().forEach(track => track.stop());
+        } catch (error) {
           console.warn('Microphone access denied or not available');
         }
       }

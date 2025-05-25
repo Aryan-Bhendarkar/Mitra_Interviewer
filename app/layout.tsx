@@ -10,8 +10,8 @@ const monaSans = Mona_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "PrepWise",
-  description: "An AI-powered platform for preparing for mock interviews",
+  title: "Mitra AI - Your AI Interview Companion",
+  description: "Your trusted AI companion for mastering interviews through intelligent practice, real-time guidance, and personalized feedback",
 };
 
 export default function RootLayout({

@@ -1,0 +1,36 @@
+<svg width="42" height="36" viewBox="0 0 42 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="50%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Neural network nodes -->
+  <circle cx="8" cy="8" r="3" fill="url(#logoGradient)" opacity="0.8"/>
+  <circle cx="21" cy="6" r="3" fill="url(#logoGradient)" opacity="0.9"/>
+  <circle cx="34" cy="8" r="3" fill="url(#logoGradient)" opacity="0.8"/>
+  
+  <circle cx="6" cy="18" r="3" fill="url(#logoGradient)" opacity="0.7"/>
+  <circle cx="21" cy="18" r="4" fill="url(#logoGradient)"/>
+  <circle cx="36" cy="18" r="3" fill="url(#logoGradient)" opacity="0.7"/>
+  
+  <circle cx="8" cy="28" r="3" fill="url(#logoGradient)" opacity="0.8"/>
+  <circle cx="21" cy="30" r="3" fill="url(#logoGradient)" opacity="0.9"/>
+  <circle cx="34" cy="28" r="3" fill="url(#logoGradient)" opacity="0.8"/>
+  
+  <!-- Neural network connections -->
+  <path d="M8 8 L21 6" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.6"/>
+  <path d="M21 6 L34 8" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.6"/>
+  <path d="M8 8 L6 18" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.5"/>
+  <path d="M21 6 L21 18" stroke="url(#logoGradient)" stroke-width="2" opacity="0.8"/>
+  <path d="M34 8 L36 18" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.5"/>
+  <path d="M6 18 L21 18" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.7"/>
+  <path d="M21 18 L36 18" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.7"/>
+  <path d="M6 18 L8 28" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.5"/>
+  <path d="M21 18 L21 30" stroke="url(#logoGradient)" stroke-width="2" opacity="0.8"/>
+  <path d="M36 18 L34 28" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.5"/>
+  <path d="M8 28 L21 30" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.6"/>
+  <path d="M21 30 L34 28" stroke="url(#logoGradient)" stroke-width="1.5" opacity="0.6"/>
+</svg>

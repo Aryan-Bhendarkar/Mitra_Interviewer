@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { getVoiceService, VoiceService } from "@/lib/voice.service";
+import { getVoiceService } from "@/lib/voice.service";
 import { createFeedback } from "@/lib/actions/general.action";
 import BrowserSupport from "./BrowserSupport";
 
@@ -38,17 +38,16 @@ const Agent = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [showTapToSpeak, setShowTapToSpeak] = useState(false);
-  const [voiceService, setVoiceService] = useState<VoiceService | null>(null);
+  const [voiceService, setVoiceService] = useState<any>(null);
   const [isSupported, setIsSupported] = useState(true);
   const [showSupport, setShowSupport] = useState(false);
   const [isProcessingCompletion, setIsProcessingCompletion] = useState(false);
+
   // Initialize voice service only on client side
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const service = getVoiceService();
-      if (service) {
-        setVoiceService(service);
-      }
+      setVoiceService(service);
     }
   }, []);
 
@@ -140,16 +139,13 @@ const Agent = ({
       voiceService.off("processing-start", onProcessingStart);
       voiceService.off("processing-end", onProcessingEnd);
       voiceService.off("error", onError);
-    };  }, [voiceService, callStatus, messages, questions, type]);
-
-  const [processingFeedback, setProcessingFeedback] = useState(false);
+    };
+  }, [voiceService]);  const [processingFeedback, setProcessingFeedback] = useState(false);
   
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
-    }
-
-    const handleGenerateFeedback = async (messages: VoiceMessage[]) => {
+    }    const handleGenerateFeedback = async (messages: VoiceMessage[]) => {
 
       // Check if we have enough conversation to generate feedback
       if (messages.length === 0) {
@@ -181,9 +177,11 @@ const Agent = ({
         content: msg.content
       }));
 
-      console.log("Transcript to send:", transcript);      const { success, feedbackId: id } = await createFeedback({
+      console.log("Transcript to send:", transcript);
+
+      const { success, feedbackId: id } = await createFeedback({
         interviewId: interviewId!,
-        userId: userId || "",
+        userId: userId!,
         transcript,
         feedbackId,
       });
@@ -225,9 +223,10 @@ const Agent = ({
 
         const response = await fetch('/api/generate-interview', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },          body: JSON.stringify({
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             conversation,
-            userId: userId || ""
+            userId: userId!
           })
         });
 
@@ -274,11 +273,12 @@ const Agent = ({
     }
     
     setCallStatus(CallStatus.CONNECTING);
-    try {      await voiceService.startConversation({
+    try {
+      await voiceService.startConversation({
         type,
         questions,
         userName,
-        userId: userId || "",
+        userId,
       });
     } catch (error) {
       console.error("Error starting conversation:", error);

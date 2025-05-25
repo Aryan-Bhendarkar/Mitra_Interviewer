@@ -1,0 +1,65 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle with Subtle Gradient -->
+  <circle cx="24" cy="24" r="23" fill="url(#bgGradient)" stroke="url(#borderGradient)" stroke-width="2"/>
+  
+  <!-- Central Brain/Mind Icon -->
+  <g transform="translate(14, 14)">
+    <!-- Main Brain Shape -->
+    <path d="M10 2.5C12.5 2.5 14.5 4.5 14.5 7C15.5 7.5 16.5 8.5 16.5 10C16.5 11.5 15.5 12.5 14.5 13C14.5 15.5 12.5 17.5 10 17.5C7.5 17.5 5.5 15.5 5.5 13C4.5 12.5 3.5 11.5 3.5 10C3.5 8.5 4.5 7.5 5.5 7C5.5 4.5 7.5 2.5 10 2.5Z" fill="url(#brainGradient)" stroke="none"/>
+    
+    <!-- Neural Connections -->
+    <circle cx="8" cy="8" r="1.2" fill="url(#nodeGradient)"/>
+    <circle cx="12" cy="8" r="1.2" fill="url(#nodeGradient)"/>
+    <circle cx="10" cy="12" r="1.2" fill="url(#nodeGradient)"/>
+    
+    <!-- Connection Lines -->
+    <line x1="8" y1="8" x2="12" y2="8" stroke="url(#connectionGradient)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="8" y1="8" x2="10" y2="12" stroke="url(#connectionGradient)" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="12" y1="8" x2="10" y2="12" stroke="url(#connectionGradient)" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Subtle Glow Effect -->
+  <circle cx="24" cy="24" r="20" fill="none" stroke="url(#glowGradient)" stroke-width="1" opacity="0.3"/>
+  
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#1e293b"/>
+      <stop offset="50%" stopColor="#334155"/>
+      <stop offset="100%" stopColor="#475569"/>
+    </linearGradient>
+    
+    <!-- Border Gradient -->
+    <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#6366f1"/>
+      <stop offset="50%" stopColor="#a855f7"/>
+      <stop offset="100%" stopColor="#10b981"/>
+    </linearGradient>
+    
+    <!-- Brain Gradient -->
+    <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#e2e8f0"/>
+      <stop offset="50%" stopColor="#cbd5e1"/>
+      <stop offset="100%" stopColor="#94a3b8"/>
+    </linearGradient>
+    
+    <!-- Node Gradient -->
+    <radialGradient id="nodeGradient" cx="50%" cy="50%">
+      <stop offset="0%" stopColor="#6366f1"/>
+      <stop offset="100%" stopColor="#4f46e5"/>
+    </radialGradient>
+    
+    <!-- Connection Gradient -->
+    <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#a855f7"/>
+      <stop offset="100%" stopColor="#10b981"/>
+    </linearGradient>
+    
+    <!-- Glow Gradient -->
+    <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#6366f1"/>
+      <stop offset="50%" stopColor="#a855f7"/>
+      <stop offset="100%" stopColor="#10b981"/>
+    </linearGradient>
+  </defs>
+</svg>
